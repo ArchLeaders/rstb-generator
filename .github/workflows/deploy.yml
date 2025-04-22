@@ -54,18 +54,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        # Or @nightly if you want
         uses: dtolnay/rust-toolchain@stable
-        # Arguments to pass in
         with:
-          # Make Rust compile to our target (defined in the matrix)
           targets: ${{ matrix.config.target }}
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --verbose --release --target ${{ matrix.config.target }}
+        shell: bash
+        run: |
+          cargo build --verbose --release --target ${{ matrix.config.target }}
 
       - name: Build archive
         shell: bash
