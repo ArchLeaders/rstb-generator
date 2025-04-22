@@ -44,24 +44,20 @@ jobs:
           - name: Windows (x64)
             os: windows-latest
             platform: win-x64
-            target: x86_64-pc-windows-gnu
           - name: Linux (x64)
             os: ubuntu-latest
             platform: linux-x64
-            target: x86_64-unknown-linux-musl
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.config.target }}
+        uses: actions-rs/toolchain@v1
 
       - name: Build
         shell: bash
         run: |
-          cargo build --verbose --release --target ${{ matrix.config.target }}
+          cargo build --verbose --release --target-dir ./target/${{ matrix.config.platform }}
 
       - name: Build archive
         shell: bash
@@ -71,9 +67,9 @@ jobs:
           dirname="$binary_name-${{ needs.release.outputs.version }}-${{ matrix.config.platform }}"
           mkdir "$dirname"
           if [ "${{ matrix.config.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.config.target }}/release/$binary_name.exe" "$dirname"
+            mv "target/${{ matrix.config.platform }}/release/$binary_name.exe" "$dirname"
           else
-            mv "target/${{ matrix.config.target }}/release/$binary_name" "$dirname"
+            mv "target/${{ matrix.config.platform }}/release/$binary_name" "$dirname"
           fi
 
           if [ "${{ matrix.config.os }}" = "windows-latest" ]; then
