@@ -63,13 +63,10 @@ jobs:
       - name: Build
         run: cargo build --release --verbose --target-dir ./target/${{ matrix.config.platform }}
 
-      - name: Archive Build
-        uses: TheDoctor0/zip-release@0.7.6
+      - uses: vimtor/action-zip@v1.2
         with:
-          type: zip
-          filename: ./${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
-          directory: ./target/${{ matrix.config.platform }}
-          path: ./*.exe
+          files: ./target/${{ matrix.config.platform }}/${{ matrix.target.project }}${{ matrix.config.extension }}
+          dest: ./${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
 
       - name: Upload Release
         uses: actions/upload-release-asset@v1
