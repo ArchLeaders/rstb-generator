@@ -75,13 +75,13 @@ jobs:
 
           dirname="$binary_name-${{ needs.release.outputs.version }}-${{ matrix.config.platform }}"
           mkdir "$dirname"
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
+          if [ "${{ matrix.config.os }}" = "windows-latest" ]; then
+            mv "target/${{ matrix.config.target }}/release/$binary_name.exe" "$dirname"
           else
-            mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
+            mv "target/${{ matrix.config.target }}/release/$binary_name" "$dirname"
           fi
 
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if [ "${{ matrix.config.os }}" = "windows-latest" ]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
           else
