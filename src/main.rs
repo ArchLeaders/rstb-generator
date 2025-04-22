@@ -1,4 +1,5 @@
 mod generator;
+mod util;
 
 use clap::Parser;
 use generator::{Generator, GeneratorOptions};

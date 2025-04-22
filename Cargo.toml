@@ -9,4 +9,4 @@ roead = { version = "1.0.0", features = ["yaz0"] }
 clap = { version = "4.5.37", features = ["derive"] }
 
 [workspace.dependencies]
-rstb = { git = "https://github.com/GingerAvalanche/rstb-rust.git", branch = "chemical", features = ["complex", "botw-data"] }
+rstb = { git = "https://github.com/GingerAvalanche/rstb-rust.git", branch = "chemical", features = ["complex", "botw-data", "yaz0"] }

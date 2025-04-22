@@ -101,6 +101,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d62b7694a562cdf5a74227903507c56ab2cc8bdd1f781ed5cb4cf9c9f810bfc"
 
 [[package]]
+name = "arrayvec"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
+
+[[package]]
 name = "auto-enum"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -805,6 +811,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "yaz0",
 ]
 
 [[package]]
@@ -1189,6 +1196,17 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+
+[[package]]
+name = "yaz0"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29c578bd702f600fb30b486ab767007cd17f5fad99a40fb943821a53de12b7ae"
+dependencies = [
+ "arrayvec",
+ "byteorder",
+ "thiserror",
+]
 
 [[package]]
 name = "zerocopy"
