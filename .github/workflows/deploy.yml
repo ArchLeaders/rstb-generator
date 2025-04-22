@@ -4,7 +4,7 @@ permissions:
 
 on:
   push:
-    tags: ["v*"]
+    tags: [ "v*" ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,6 +34,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    needs: release
     strategy:
       fail-fast: true
       matrix:
@@ -63,7 +64,8 @@ jobs:
       - name: Build
         run: cargo build --release --verbose --target-dir ./target/${{ matrix.config.platform }}
 
-      - uses: vimtor/action-zip@v1.2
+      - name: Zip Build
+        uses: vimtor/action-zip@v1.2
         with:
           files: ./target/${{ matrix.config.platform }}/${{ matrix.target.project }}${{ matrix.config.extension }}
           dest: ./${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
