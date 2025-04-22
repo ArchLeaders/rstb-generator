@@ -67,7 +67,7 @@ jobs:
       - name: Zip Build
         uses: vimtor/action-zip@v1.2
         with:
-          files: ./target/${{ matrix.config.platform }}/${{ matrix.target.project }}${{ matrix.config.extension }}
+          files: ./target/${{ matrix.config.platform }}/release/${{ matrix.target.project }}${{ matrix.config.extension }}
           dest: ./${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
 
       - name: Upload Release
