@@ -33,7 +33,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ${{ matric.config.os }}
+    runs-on: ${{ matrix.config.os }}
     needs: release
     strategy:
       fail-fast: true
