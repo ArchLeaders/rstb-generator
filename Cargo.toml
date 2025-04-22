@@ -1,0 +1,12 @@
+[package]
+name = "rstb-generator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rstb = { workspace = true }
+roead = { version = "1.0.0", features = ["yaz0"] }
+clap = { version = "4.5.37", features = ["derive"] }
+
+[workspace.dependencies]
+rstb = { git = "https://github.com/GingerAvalanche/rstb-rust.git", branch = "chemical", features = ["complex", "botw-data"] }
