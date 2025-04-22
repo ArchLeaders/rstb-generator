@@ -1,0 +1,82 @@
+name: Deploy
+permissions:
+  "contents": "write"
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.release.outputs.upload_url }}
+      version: ${{ steps.version.outputs.version-without-v }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Version
+        uses: battila7/get-version-action@v2.2.1
+        id: version
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: TotK Mod Manager - ${{ steps.version.outputs.version }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - project: rstb-generator
+        config:
+          - name: Windows (x64)
+            os: windows-latest
+            platform: win-x64
+            extension: .exe
+          - name: Windows (arm64)
+            os: windows-11-arm
+            platform: win-arm64
+            extension: .exe
+          - name: Linux (x64)
+            os: ubuntu-latest
+            platform: linux-x64
+            extension: ''
+          - name: Linux (arm64)
+            os: ubuntu-24.04-arm
+            platform: linux-arm64
+            extension: ''
+
+    steps:
+      - name: Build
+        run: cargo build --release --verbose --target-dir ./target/${{ matrix.config.platform }}
+
+      - name: Archive Build
+        uses: TheDoctor0/zip-release@0.7.6
+        with:
+          type: zip
+          filename: ./${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
+          directory: ./target/${{ matrix.config.platform }}
+          path: ./*.exe
+
+      - name: Upload Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        with:
+          upload_url: ${{ needs.release.outputs.release }}
+          asset_path: ${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
+          asset_name: ${{ matrix.target.project }}-${{ matrix.config.platform }}.zip
+          asset_content_type: application/zip
