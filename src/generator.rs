@@ -1,7 +1,7 @@
 use crate::util;
 use clap::Parser;
 use roead::sarc::Sarc;
-use rstb::{ResourceSizeTable};
+use rstb::{Endian, ResourceSizeTable};
 use std::io::{Error, ErrorKind, Result, Write};
 use std::path::{Path, PathBuf};
 
@@ -19,13 +19,15 @@ pub struct Generator {
 
 impl Generator {
     pub fn from_options(options: GeneratorOptions) -> Self {
+        let byte_order = match options.is_switch {
+            true => rstb::Endian::Little,
+            _ => rstb::Endian::Big,
+        };
+
         Generator {
             path: PathBuf::from(&options.mod_path),
-            byte_order: match options.is_switch {
-                true => rstb::Endian::Little,
-                _ => rstb::Endian::Big,
-            },
-            rstb: Self::get_rstb(&options.mod_path, &options.source_file).unwrap(),
+            byte_order: byte_order,
+            rstb: Self::get_rstb(&options.mod_path, &options.source_file, byte_order).unwrap(),
             output_path: options.output_file_path,
             padding: options.padding,
         }
@@ -136,7 +138,7 @@ impl Generator {
         (root.join(content_path), root.join(aoc_path))
     }
 
-    fn get_rstb(mod_path: &String, input_path: &Option<String>) -> Result<ResourceSizeTable> {
+    fn get_rstb(mod_path: &String, input_path: &Option<String>, byte_order: rstb::Endian) -> Result<ResourceSizeTable> {
         match input_path {
             Some(input_path) => {
                 if !std::fs::exists(input_path)? {
@@ -150,7 +152,7 @@ impl Generator {
                 Ok(ResourceSizeTable::from_binary(data).unwrap())
             }
             _ => {
-                let (content_path, _) = util::platform_prefixes(self.byte_order);
+                let (content_path, _) = util::platform_prefixes(byte_order);
                 let path = PathBuf::from(mod_path).join(content_path).join(RSTB_PATH);
                 if !path.exists() {
                     return Err(Error::new(
