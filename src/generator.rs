@@ -150,7 +150,8 @@ impl Generator {
                 Ok(ResourceSizeTable::from_binary(data).unwrap())
             }
             _ => {
-                let path = PathBuf::from(mod_path).join(RSTB_PATH);
+                let (content_path, _) = util::platform_prefixes(self.byte_order);
+                let path = PathBuf::from(mod_path).join(content_path).join(RSTB_PATH);
                 if !path.exists() {
                     return Err(Error::new(
                         ErrorKind::NotFound,
