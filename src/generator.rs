@@ -20,8 +20,8 @@ pub struct Generator {
 impl Generator {
     pub fn from_options(options: GeneratorOptions) -> Self {
         let byte_order = match options.is_switch {
-            true => rstb::Endian::Little,
-            _ => rstb::Endian::Big,
+            true => Endian::Little,
+            _ => Endian::Big,
         };
 
         Generator {
@@ -138,7 +138,7 @@ impl Generator {
         (root.join(content_path), root.join(aoc_path))
     }
 
-    fn get_rstb(mod_path: &String, input_path: &Option<String>, byte_order: rstb::Endian) -> Result<ResourceSizeTable> {
+    fn get_rstb(mod_path: &String, input_path: &Option<String>, byte_order: Endian) -> Result<ResourceSizeTable> {
         match input_path {
             Some(input_path) => {
                 if !std::fs::exists(input_path)? {
