@@ -1,6 +1,7 @@
 use crate::util;
 use clap::Parser;
 use roead::sarc::Sarc;
+use roead::yaz0;
 use rstb::{Endian, ResourceSizeTable};
 use std::io::{Error, ErrorKind, Result, Write};
 use std::path::{Path, PathBuf};
@@ -26,7 +27,7 @@ impl Generator {
 
         Generator {
             path: PathBuf::from(&options.mod_path),
-            byte_order: byte_order,
+            byte_order,
             rstb: Self::get_rstb(&options.mod_path, &options.source_file, byte_order).unwrap(),
             output_path: options.output_file_path,
             padding: options.padding,
@@ -60,7 +61,7 @@ impl Generator {
             }
         })?;
 
-        let buffer = self.rstb.to_compressed_binary(self.byte_order);
+        let buffer = self.rstb.to_binary(self.byte_order);
         output_file.write_all(&buffer)?;
 
         Ok(())
@@ -91,13 +92,15 @@ impl Generator {
         self.insert_file_with_data(data, file_path.to_str().unwrap(), canon, ext)
     }
 
-    fn insert_file_with_data(&mut self, data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
-        if data.len() <= 0 {
+    fn insert_file_with_data(&mut self, input_data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
+        if input_data.len() <= 0 {
             return Ok(());
         }
 
+        let data = yaz0::compress_if(input_data, file_path);
+
         if &data[0..4] == b"SARC" {
-            self.process_archive(data)?;
+            self.process_archive(&data)?;
         }
 
         match ext {
@@ -110,7 +113,7 @@ impl Generator {
             return Ok(());
         }
 
-        match rstb::calc::estimate_from_bytes_and_name(data, file_path, self.byte_order) {
+        match rstb::calc::estimate_from_bytes_and_name(&data, file_path, self.byte_order) {
             Some(size) => {
                 println!("{}, {} + 0x{:X}", canon, size, self.padding);
                 Ok(self.rstb.set(canon.as_str(), size))
