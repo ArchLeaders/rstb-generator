@@ -92,15 +92,14 @@ impl Generator {
         self.insert_file_with_data(data, file_path.to_str().unwrap(), canon, ext)
     }
 
-    fn insert_file_with_data(&mut self, input_data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
-        if input_data.len() <= 0 {
+    fn insert_file_with_data(&mut self, data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
+        if data.len() <= 0 {
             return Ok(());
         }
 
-        let data = yaz0::compress_if(input_data, file_path);
-
-        if &data[0..4] == b"SARC" {
-            self.process_archive(&data)?;
+        if &data[0..4] == b"SARC" || &data[0x11..0x15] == b"SARC" {
+            let decomp_data = yaz0::decompress_if(data);
+            self.process_archive(&decomp_data)?;
         }
 
         match ext {
@@ -118,7 +117,10 @@ impl Generator {
                 println!("{}, {} + 0x{:X}", canon, size, self.padding);
                 Ok(self.rstb.set(canon.as_str(), size))
             }
-            _ => Ok(()),
+            _ => {
+                self.rstb.remove(canon.as_str());
+                Ok(())
+            },
         }
     }
 
