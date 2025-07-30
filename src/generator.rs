@@ -93,11 +93,11 @@ impl Generator {
     }
 
     fn insert_file_with_data(&mut self, data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
-        if data.len() <= 0 {
+        if data.len() <= 8 {
             return Ok(());
         }
 
-        if &data[0..4] == b"SARC" || &data[0x11..0x15] == b"SARC" {
+        if &data[0..4] == b"SARC" || (data.len() >= 0x15 && &data[0x11..0x15] == b"SARC") {
             let decomp_data = yaz0::decompress_if(data);
             self.process_archive(&decomp_data)?;
         }
