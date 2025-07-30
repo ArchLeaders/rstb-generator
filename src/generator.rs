@@ -5,6 +5,7 @@ use roead::yaz0;
 use rstb::{Endian, ResourceSizeTable};
 use std::io::{Error, ErrorKind, Result, Write};
 use std::path::{Path, PathBuf};
+use join_str::jstr;
 
 //noinspection SpellCheckingInspection
 const RSTB_PATH: &str = "System/Resource/ResourceSizeTable.product.srsizetable";
@@ -38,11 +39,11 @@ impl Generator {
         let (content_path, aoc_path) = self.get_content_paths();
 
         if content_path.exists() {
-            self.generate(&content_path)?;
+            self.generate(&content_path, false)?;
         }
 
         if aoc_path.exists() {
-            self.generate(&aoc_path)?;
+            self.generate(&aoc_path, true)?;
         }
 
         let mut output_file = std::fs::File::create(match &self.output_path {
@@ -67,15 +68,15 @@ impl Generator {
         Ok(())
     }
 
-    fn generate(&mut self, path: &PathBuf) -> Result<()> {
+    fn generate(&mut self, path: &PathBuf, is_aoc: bool) -> Result<()> {
         for dir in std::fs::read_dir(path)? {
             let path = dir?.path();
             if path.is_dir() {
-                self.generate(&path)?;
+                self.generate(&path, is_aoc)?;
                 continue;
             }
 
-            self.insert_file(&path, &path.strip_prefix(&self.path).unwrap())?;
+            self.insert_file(&path, &path.strip_prefix(&self.path).unwrap(), is_aoc)?;
         }
         Ok(())
     }
@@ -85,26 +86,26 @@ impl Generator {
         todo!();
     }
 
-    fn insert_file(&mut self, file_path: &Path, relative_path: &Path) -> Result<()> {
+    fn insert_file(&mut self, file_path: &Path, relative_path: &Path, is_aoc: bool) -> Result<()> {
         let canon = &util::canonicalize(relative_path);
         let ext = &canon[canon.rfind('.').unwrap() + 1..];
         let data = &std::fs::read(file_path)?;
-        self.insert_file_with_data(data, file_path.to_str().unwrap(), canon, ext)
+        self.insert_file_with_data(data, file_path, canon, ext, is_aoc)
     }
 
-    fn insert_file_with_data(&mut self, data: &[u8], file_path: &str, canon: &String, ext: &str) -> Result<()> {
+    fn insert_file_with_data(&mut self, data: &[u8], file_path: &Path, canon: &String, ext: &str, is_aoc: bool) -> Result<()> {
         if data.len() <= 8 {
             return Ok(());
         }
 
-        if &data[0..4] == b"SARC" || (data.len() >= 0x15 && &data[0x11..0x15] == b"SARC") {
+        if Self::is_mergable_sarc(file_path, ext, &data) {
             let decomp_data = yaz0::decompress_if(data);
-            self.process_archive(&decomp_data)?;
+            self.process_archive(&decomp_data, is_aoc)?;
         }
 
         match ext {
             "pack" | "bgdata" | "txt" | "bgsvdata" | "yml" | "msbt" | "bat" | "ini" | "png" | "bfstm"
-            | "py" | "sh" => return Ok(()),
+            | "py" | "sh" | "rsizetable" => return Ok(()),
             _ => (),
         }
 
@@ -112,26 +113,40 @@ impl Generator {
             return Ok(());
         }
 
-        match rstb::calc::estimate_from_bytes_and_name(&data, file_path, self.byte_order) {
+        let file_name = file_path.to_str().unwrap();
+        match rstb::calc::estimate_from_bytes_and_name(&data, file_name, self.byte_order) {
             Some(size) => {
-                println!("{}, {} + 0x{:X}", canon, size, self.padding);
-                Ok(self.rstb.set(canon.as_str(), size))
+                // println!("{}, {} + 0x{:X}", canon, size, self.padding);
+                // println!("{}", canon);
+                Ok(self.rstb.set(canon.as_str(), size + self.padding))
             }
-            _ => {
-                self.rstb.remove(canon.as_str());
-                Ok(())
+            _ => match rstb::calc::estimate_from_size_and_name(data.len(), file_path.to_str().unwrap(), self.byte_order) {
+                Some(size) => {
+                    // println!("{}, {} + 0x{:X}", canon, size, self.padding);
+                    Ok(self.rstb.set(canon.as_str(), size + self.padding))
+                }
+                _ => {
+                    println!("{}", canon);
+                    self.rstb.remove(canon.as_str());
+                    Ok(())
+                }
             },
         }
     }
 
-    fn process_archive(&mut self, data: &[u8]) -> Result<()> {
+    fn process_archive(&mut self, data: &[u8], is_aoc: bool) -> Result<()> {
         let archive: Sarc = Sarc::new(data).unwrap();
 
         for file in archive.files() {
             let name = file.name.unwrap();
-            let canon = &util::canonicalize(name);
+            let file_path = match (is_aoc, name.starts_with("Aoc/0010/")) {
+                (true, false) => jstr!("Aoc/0010/{name}"),
+                _ => name.to_owned(),
+            };
+
+            let canon = &util::canonicalize(&file_path.as_str());
             let ext = &canon[canon.rfind('.').unwrap() + 1..];
-            self.insert_file_with_data(file.data, name, canon, ext)?
+            self.insert_file_with_data(file.data, Path::new(&file_path), canon, ext, is_aoc)?
         }
 
         Ok(())
@@ -171,6 +186,27 @@ impl Generator {
                 Ok(ResourceSizeTable::from_binary(data).unwrap())
             }
         }
+    }
+
+    fn is_mergable_sarc(file_name: &Path, ext: &str, data: &[u8]) -> bool {
+        if data.len() < 0x40 {
+            return false
+        }
+
+        if &data[..4] != b"SARC" && &data[0x11..0x15] != b"SARC" {
+            return false
+        }
+
+        if match ext { "genvb" | "sarc" | "arc" => true, _ => false }  {
+            return false
+        }
+
+        let stem = file_name.file_stem().unwrap().to_str().unwrap();
+        if match stem { "tera_resource.Nin_NX_NVN" | "tera_resource.Cafe_Cafe_GX2" => true, _ => false } {
+            return false
+        }
+
+        true
     }
 }
 

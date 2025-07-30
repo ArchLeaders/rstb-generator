@@ -828,6 +828,7 @@ name = "rstb-generator"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "join_str",
  "roead 1.0.0",
  "rstb",
 ]
