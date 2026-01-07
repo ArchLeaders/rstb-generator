@@ -104,8 +104,11 @@ impl Generator {
         }
 
         match ext {
-            "pack" | "bgdata" | "txt" | "bgsvdata" | "yml" | "msbt" | "bat" | "ini" | "png" | "bfstm"
-            | "py" | "sh" | "rsizetable" => return Ok(()),
+            "pack" | "bgdata" | "txt" | "bgsvdata" | "yml" | "msbt" | "bat" | "ini" | "png" | "bfstm" |
+            "py" | "sh" | "rsizetable" | "bflim" | "bflan" | "bflyt" | "bgsh" | "fxparam" |
+            "gsh" | "baacl" | "baatn" | "baroc" | "extm" | "agstats" | "stera" | "kybin" | "bffnt" |
+            // bars can be calculated, but UKMM and BCML ignore it
+            "bars" => return Ok(()),
             _ => (),
         }
 
