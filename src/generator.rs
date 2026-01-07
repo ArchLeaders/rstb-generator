@@ -62,7 +62,7 @@ impl Generator {
             }
         })?;
 
-        let buffer = self.rstb.to_binary(self.byte_order);
+        let buffer = self.rstb.to_compressed_binary(self.byte_order);
         output_file.write_all(&buffer)?;
 
         Ok(())
