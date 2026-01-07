@@ -116,23 +116,18 @@ impl Generator {
             return Ok(());
         }
 
-        let file_name = file_path.to_str().unwrap();
+        let file_name = file_path.file_name().expect("Could not get file name").to_str().unwrap();
         match rstb::calc::estimate_from_bytes_and_name(&data, file_name, self.byte_order) {
             Some(size) => {
-                // println!("{}, {} + 0x{:X}", canon, size, self.padding);
-                // println!("{}", canon);
+                println!("{}, {} + 0x{:X}", canon, size, self.padding);
                 Ok(self.rstb.set(canon.as_str(), size + self.padding))
             }
-            _ => match rstb::calc::estimate_from_size_and_name(data.len(), file_path.to_str().unwrap(), self.byte_order) {
+            _ => match rstb::calc::estimate_from_size_and_name(data.len(), file_name, self.byte_order) {
                 Some(size) => {
                     // println!("{}, {} + 0x{:X}", canon, size, self.padding);
                     Ok(self.rstb.set(canon.as_str(), size + self.padding))
                 }
-                _ => {
-                    println!("{}", canon);
-                    self.rstb.remove(canon.as_str());
-                    Ok(())
-                }
+                _ => Ok(())
             },
         }
     }
